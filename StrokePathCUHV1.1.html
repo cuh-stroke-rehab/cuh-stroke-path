@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StrokePath CUH: Decision Support Tool</title>
+    <style>
+        :root {
+            --cuh-teal: #006666;
+            --cuh-teal-dark: #004d4d;
+            --hse-slate: #475569;
+            --bg-canvas: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --border-line: #cbd5e1;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-canvas);
+            color: var(--text-dark);
+            line-height: 1.4;
+            margin: 0;
+            padding: 12px;
+        }
+        .container { max-width: 1080px; margin: 0 auto; }
+        
+        header { 
+            background: linear-gradient(135deg, var(--cuh-teal-dark) 0%, var(--cuh-teal) 100%);
+            color: white; 
+            padding: 10px 14px; 
+            border-radius: 6px; 
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+        }
+        .header-left { text-align: left; }
+        .cuh-tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-bottom: 2px;
+        }
+        header h1 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: 0.3px; }
+        header p.author { margin: 1px 0 0 0; font-size: 11px; color: #ccffff; opacity: 0.95; }
+        .privacy-pill {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        @media(max-width: 768px) {
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .dash-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-line);
+            border-top: 3px solid var(--cuh-teal);
+            border-radius: 6px;
+            padding: 7px 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .dash-card-label {
+            font-size: 9.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--hse-slate);
+            margin-bottom: 2px;
+        }
+        .dash-card-value {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--cuh-teal-dark);
+            line-height: 1.2;
+        }
+        
+        .date-strip {
+            background: #ffffff;
+            border: 1px solid var(--border-line);
+            border-radius: 6px;
+            padding: 7px 12px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .date-group { display: flex; align-items: center; gap: 6px; font-size: 11.5px; }
+        .date-group label { font-weight: 700; color: var(--text-dark); margin: 0; }
+        .date-group input[type="date"] {
+            padding: 4px 6px; border: 1px solid var(--border-line); border-radius: 4px; font-size: 11.5px; background: #fff;
+        }
+        .day-badge {
+            background: #e2e8f0; color: var(--text-dark); font-weight: bold; font-size: 11px;
+            padding: 3px 9px; border-radius: 12px; border: 1px solid #cbd5e1;
+        }
+        .day-badge.valid { background: #dcfce7; color: #166534; border-color: #86efac; }
+        .day-badge.delayed { background: #ffedd5; color: #9a3412; border-color: #fdba74; }
+
+        .tab-navigation {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        @media(max-width: 768px) {
+            .tab-navigation { grid-template-columns: 1fr 1fr; }
+        }
+        .tab {
+            padding: 8px 4px; cursor: pointer; background: #e2e8f0; border: 1px solid var(--border-line);
+            font-size: 11px; font-weight: 700; color: var(--hse-slate); text-align: center; border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .tab.active { background: var(--cuh-teal); color: white; border-color: var(--cuh-teal); }
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .card { background: var(--card-bg); border: 1px solid var(--border-line); border-radius: 6px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        h2 { color: var(--cuh-teal); margin-top: 0; font-size: 13.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px; font-weight: 700; }
+        h3 { color: var(--cuh-teal-dark); font-size: 12.5px; margin: 10px 0 4px 0; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media(max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        .form-group { margin-bottom: 8px; }
+        label { display: block; font-weight: 700; margin-bottom: 2px; font-size: 11.5px; color: var(--text-dark); }
+        .field-desc { font-size: 10.5px; color: #64748b; margin-bottom: 3px; line-height: 1.3; }
+        .setup-prompt {
+            background: #f8fafc;
+            border-left: 3px solid var(--cuh-teal);
+            padding: 5px 8px;
+            margin-bottom: 6px;
+            font-size: 10.5px;
+            color: #334155;
+            line-height: 1.35;
+            border-radius: 0 4px 4px 0;
+        }
+        .setup-prompt strong { color: var(--cuh-teal-dark); }
+        select, input[type="number"] { width: 100%; padding: 6px; border: 1px solid var(--border-line); border-radius: 4px; font-size: 11.5px; box-sizing: border-box; background: #fff; color: var(--text-dark); -webkit-appearance: none; }
+        
+        .score-badge { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; color: var(--text-dark); }
+        .status-line { font-size: 11px; font-weight: 600; color: #475569; margin-top: 4px; }
+
+        .result-box { border-radius: 4px; padding: 10px; margin-top: 6px; border: 1px solid #cbd5e1; font-size: 12px; line-height: 1.4; }
+        .res-waiting { background-color: #f8fafc; color: #475569; border-left: 4px solid #94a3b8; }
+        .res-excellent { background-color: #f0fdf4; border-color: #bbf7d0; color: #14532d; border-left: 4px solid #22c55e; }
+        .res-good { background-color: #f0fdfa; border-color: #99f6e4; color: #115e59; border-left: 4px solid #0d9488; }
+        .res-limited { background-color: #fff7ed; border-color: #fed7aa; color: #7c2d12; border-left: 4px solid #f97316; }
+        .res-poor { background-color: #fef2f2; border-color: #fecaca; color: #991b1b; border-left: 4px solid #ef4444; }
+        
+        .result-title { font-weight: bold; font-size: 12.5px; margin-bottom: 3px; border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .section-callout { font-weight: bold; margin-top: 6px; color: var(--text-dark); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .drawer-btn {
+            background-color: #f1f5f9; color: var(--cuh-teal); border: 1px solid var(--cuh-teal);
+            padding: 6px; width: 100%; font-weight: bold; font-size: 11px; border-radius: 4px; cursor: pointer; text-align: center; margin-bottom: 8px;
+        }
+        .drawer-btn:hover { background-color: #e2e8f0; }
+        .calc-drawer { display: none; background: #f8fafc; border: 1px solid var(--border-line); border-radius: 4px; padding: 8px; margin-bottom: 8px; }
+
+        .clinical-prompt { background: #f0fdfa; border-left: 4px solid var(--cuh-teal); padding: 6px 8px; margin-bottom: 8px; font-size: 11px; color: #134e4a; line-height: 1.35; }
+        .disclaimer-banner { background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #d97706; padding: 6px 8px; margin-bottom: 8px; font-size: 11px; color: #92400e; line-height: 1.35; border-radius: 4px; }
+        .nihss-section { background: #fff7ed; border: 1px solid #fed7aa; padding: 8px; border-radius: 4px; margin-bottom: 8px; }
+
+        .mdt-box {
+            background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; margin-top: 8px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; line-height: 1.45;
+            color: #0f172a; white-space: pre-wrap; word-break: break-word; background-color: #f8fafc;
+        }
+        .copy-btn {
+            background: var(--cuh-teal); color: white; border: none; padding: 7px 12px; font-size: 11.5px;
+            font-weight: bold; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px;
+        }
+        .copy-btn:hover { background: var(--cuh-teal-dark); }
+
+        .acronym-table { width: 100%; border-collapse: collapse; margin-top: 6px; margin-bottom: 8px; font-size: 11px; }
+        .acronym-table th, .acronym-table td { border: 1px solid var(--border-line); padding: 5px 6px; text-align: left; }
+        .acronym-table th { background: #f1f5f9; color: var(--text-dark); font-weight: bold; }
+        .evidence-box { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 8px; border-radius: 4px; margin-top: 8px; font-size: 10.5px; color: #475569; line-height: 1.35; }
+
+        .test-block {
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .test-block:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        footer {
+            margin-top: 14px;
+            padding: 8px;
+            text-align: center;
+            font-size: 10.5px;
+            color: var(--hse-slate);
+            border-top: 1px solid var(--border-line);
+        }
+        footer strong { color: var(--cuh-teal); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-left">
+            <div class="cuh-tag">Cork University Hospital &bull; Acute Stroke Service</div>
+            <h1>StrokePath CUH</h1>
+            <p class="author">Clinical Decision Support Tool: PREP2 &bull; Refined TWIST &bull; Functional Measures</p>
+        </div>
+        <span class="privacy-pill">Offline &bull; Zero Patient Identifiers Stored</span>
+    </header>
+
+    <div class="dashboard-grid">
+        <div class="dash-card">
+            <span class="dash-card-label">SAFE</span>
+            <span id="dash-safe" class="dash-card-value">SAFE 0/10</span>
+        </div>
+        <div class="dash-card">
+            <span class="dash-card-label">PREP2</span>
+            <span id="dash-prep2" class="dash-card-value">Pending Evaluation</span>
+        </div>
+        <div class="dash-card">
+            <span class="dash-card-label">TWIST</span>
+            <span id="dash-twist" class="dash-card-value">Score Pending</span>
+        </div>
+        <div class="dash-card">
+            <span class="dash-card-label">DISCHARGE PATHWAY</span>
+            <span id="dash-discharge" class="dash-card-value">Awaiting TWIST</span>
+        </div>
+    </div>
+
+    <div class="date-strip">
+        <div class="date-group">
+            <label for="d-onset">Stroke Onset Date:</label>
+            <input type="date" id="d-onset" onchange="calculateDayCounter()">
+        </div>
+        <div class="date-group">
+            <label for="d-assess">Assessment Date:</label>
+            <input type="date" id="d-assess" onchange="calculateDayCounter()">
+        </div>
+        <div id="day-counter-display" class="day-badge">Select Dates</div>
+    </div>
+
+    <div class="tab-navigation">
+        <button class="tab active" onclick="switchTab('prep2-panel', this)">1. PREP2 (Day 3 &rarr; 12 Wks)</button>
+        <button class="tab" onclick="switchTab('twist-panel', this)">2. TWIST (Day 7 Walking)</button>
+        <button class="tab" onclick="switchTab('tests-panel', this)">3. Functional Tests</button>
+        <button class="tab" onclick="switchTab('mdt-panel', this)">MDT Goal Summary</button>
+        <button class="tab" onclick="switchTab('guide-panel', this)">Induction &amp; Glossary</button>
+    </div>
+
+    <!-- PANEL 1: PREP2 -->
+    <div id="prep2-panel" class="panel active">
+        <div class="grid-2">
+            <div class="card">
+                <h2>Upper Limb Evaluation (PREP2 Algorithm)</h2>
+                
+                <div class="clinical-prompt">
+                    <strong>Day 3 Window (48&ndash;72 Hours Post-Stroke) &rarr; 12-Week Arm Capacity (ARAT 0&ndash;57)</strong><br>
+                    Enter <strong>Age</strong> &amp; <strong>SAFE</strong> (Shoulder + Finger MRC). If <strong>SAFE &ge; 5</strong>, age splits &lt;80 vs &ge;80. If <strong>SAFE &lt; 5</strong>, enter Day 3 NIHSS (preferred) or Day 0 Admission NIHSS.
+                </div>
+
+                <div class="form-group">
+                    <label>1. Patient Age (18&ndash;110)</label>
+                    <input type="number" id="p-age" placeholder="e.g. 74" oninput="handleTypingValidation(this); syncAge('p-age')" onblur="finalizeAgeValidation(this)">
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid var(--border-line); padding: 8px; border-radius: 4px; margin-bottom: 8px;">
+                    <div class="form-group">
+                        <label>2. Shoulder Abduction (Paretic Side MRC)</label>
+                        <select id="p-sh" onchange="calculateAll()">
+                            <option value="0">0 - Flaccid</option><option value="1">1 - Flicker</option><option value="2">2 - Gravity eliminated</option><option value="3">3 - Against gravity</option><option value="4">4 - Against resistance</option><option value="5">5 - Normal</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 2px;">
+                        <label>3. Finger Extension (Paretic Side MRC)</label>
+                        <select id="p-fi" onchange="calculateAll()">
+                            <option value="0">0 - Flaccid</option><option value="1">1 - Flicker</option><option value="2">2 - Gravity eliminated</option><option value="3">3 - Against gravity</option><option value="4">4 - Against resistance</option><option value="5">5 - Normal</option>
+                        </select>
+                    </div>
+                    <p style="margin: 4px 0 0 0;"><strong>Calculated SAFE Score: <span id="safe-display" class="score-badge">0</span> / 10</strong></p>
+                </div>
+
+                <div id="nihss-block" class="nihss-section" style="display:none;">
+                    <div class="disclaimer-banner">
+                        <strong>Non-TMS Fallback Advisory:</strong> Diagnostic TMS is not routinely available at the acute bedside. When SAFE &lt; 5, using the NIHSS threshold provides a <em>conservative floor</em>. Patients in the Limited track with low overall stroke severity (NIHSS &lt; 9) may retain intact descending pathways and achieve a Good hand recovery.
+                    </div>
+
+                    <label style="color:#c2410c;">4. NIHSS Fallback Score (0&ndash;42)</label>
+                    <div class="field-desc">Use <strong>Day 3 NIHSS</strong> if recorded; otherwise use <strong>Day 0 Admission score</strong> or re-score below.</div>
+                    <input type="number" id="p-nihss-direct" placeholder="Enter NIHSS Total (0-42)" oninput="handleTypingValidation(this, 0, 42); calculateAll()">
+                    
+                    <button class="drawer-btn" style="margin-top: 6px; margin-bottom:0;" onclick="toggleDrawer('nihss-drawer')">Open Bedside NIHSS Calculator Dropdown</button>
+                    
+                    <div id="nihss-drawer" class="calc-drawer" style="margin-top: 6px;">
+                        <div class="form-group"><label>1a. LOC</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - Alert</option><option value="1">1 - Not alert</option><option value="2">2 - Painful stimuli</option><option value="3">3 - Comatose</option></select></div>
+                        <div class="form-group"><label>1b. LOC Questions</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - Both</option><option value="1">1 - One</option><option value="2">2 - Neither</option></select></div>
+                        <div class="form-group"><label>1c. LOC Commands</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - Both</option><option value="1">1 - One</option><option value="2">2 - Neither</option></select></div>
+                        <div class="form-group"><label>2. Best Gaze</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - Normal</option><option value="1">1 - Partial</option><option value="2">2 - Forced deviation</option></select></div>
+                        <div class="form-group"><label>3. Visual Fields</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - Normal</option><option value="1">1 - Partial</option><option value="2">2 - Complete</option><option value="3">3 - Bilateral</option></select></div>
+                        <div class="form-group"><label>4. Facial Palsy</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - Normal</option><option value="1">1 - Minor</option><option value="2">2 - Partial</option><option value="3">3 - Complete</option></select></div>
+                        <div class="form-group"><label>5. Motor Arm Drift (Paretic)</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - No drift</option><option value="1">1 - Drift &lt;10s</option><option value="2">2 - Against gravity</option><option value="3">3 - No effort</option><option value="4">4 - Flaccid</option></select></div>
+                        <div class="form-group"><label>6. Motor Leg Drift (Paretic)</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - No drift</option><option value="1">1 - Drift &lt;5s</option><option value="2">2 - Against gravity</option><option value="3">3 - No effort</option><option value="4">4 - Flaccid</option></select></div>
+                        <div class="form-group"><label>7. Limb Ataxia</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - Absent</option><option value="1">1 - One limb</option><option value="2">2 - Two limbs</option></select></div>
+                        <div class="form-group"><label>8. Sensory Loss</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - Normal</option><option value="1">1 - Mild-mod</option><option value="2">2 - Severe</option></select></div>
+                        <div class="form-group"><label>9. Best Language</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - Normal</option><option value="1">1 - Mild-mod</option><option value="2">2 - Severe</option><option value="3">3 - Global</option></select></div>
+                        <div class="form-group"><label>10. Dysarthria</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - Normal</option><option value="1">1 - Mild-mod</option><option value="2">2 - Severe</option></select></div>
+                        <div class="form-group"><label>11. Extinction/Neglect</label><select class="nihss-calc" onchange="calcNihssScore()"><option value="0">0 - None</option><option value="1">1 - Partial</option><option value="2">2 - Profound</option></select></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>12-Week Upper Limb Prediction Matrix</h2>
+                <div id="p-result" class="result-box res-waiting"><div class="result-title">Awaiting Base Variables</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL 2: REFINED TWIST (0-4 POINT INDEX) -->
+    <div id="twist-panel" class="panel">
+        <div class="grid-2">
+            <div class="card">
+                <h2>Mobility Evaluation (TWIST 0&ndash;4 Index)</h2>
+                
+                <div class="clinical-prompt">
+                    <strong>Day 7 Window (1 Week Post-Stroke) &rarr; Independent Walking (FAC &ge; 4)</strong><br>
+                    <strong>Points (Max 4):</strong> Age &lt;80 (<strong>+1</strong>) &bull; Knee Ext &ge; MRC Gr 3 (<strong>+1</strong>) &bull; BBS 6&ndash;15 (<strong>+1</strong>) / &ge;16 (<strong>+2</strong>)
+                </div>
+
+                <div class="form-group">
+                    <label>1. Patient Age (18&ndash;110)</label>
+                    <input type="number" id="t-age" placeholder="e.g. 74" oninput="handleTypingValidation(this); syncAge('t-age')" onblur="finalizeAgeValidation(this)">
+                </div>
+
+                <div class="form-group">
+                    <label>2. Paretic Knee Extension Strength (MRC Grade)</label>
+                    <select id="t-knee" onchange="calculateAll()">
+                        <option value="">-- Select Knee Extension Grade --</option>
+                        <option value="1">MRC Grade 3, 4, or 5 (&ge; Active against gravity) [+1 Pt]</option>
+                        <option value="0">MRC Grade 0, 1, or 2 (&lt; Active against gravity) [+0 Pts]</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>3. Berg Balance Scale (BBS) Total (0&ndash;56)</label>
+                    <div class="field-desc">Enter total score directly (0-56), or open the 14-item calculator below.</div>
+                    <input type="number" id="m-bbs-direct" placeholder="Direct Entry (0-56)" oninput="handleTypingValidation(this, 0, 56); calculateAll()">
+                </div>
+
+                <button class="drawer-btn" onclick="toggleDrawer('bbs-drawer')">Open 14-Item Berg Balance Scale (BBS) Calculator</button>
+
+                <div id="bbs-drawer" class="calc-drawer">
+                    <h3 style="font-size:11.5px; color:var(--cuh-teal); margin-top:0;">Interactive BBS (Default: 0)</h3>
+                    <div class="form-group"><label>1. Sitting to standing</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Moderate/Max assist</option><option value="1">1 - Minimal assist</option><option value="2">2 - Uses hands after tries</option><option value="3">3 - Indep with hands</option><option value="4">4 - Indep without hands</option></select></div>
+                    <div class="form-group"><label>2. Standing unsupported (2 min)</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Unable &lt;30s</option><option value="1">1 - Needs tries for 30s</option><option value="2">2 - Stands 30s</option><option value="3">3 - Stands 2 min supervised</option><option value="4">4 - Stands 2 min safely</option></select></div>
+                    <div class="form-group"><label>3. Sitting with back unsupported (2 min)</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Unable without support</option><option value="1">1 - Sits 10s</option><option value="2">2 - Sits 30s</option><option value="3">3 - Sits 2 min supervised</option><option value="4">4 - Sits 2 min safely</option></select></div>
+                    <div class="form-group"><label>4. Standing to sitting</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Needs assist</option><option value="1">1 - Sits uncontrolled</option><option value="2">2 - Uses legs against chair</option><option value="3">3 - Controls descent hands</option><option value="4">4 - Sits safely minimal hands</option></select></div>
+                    <div class="form-group"><label>5. Transfers</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Needs 2 people</option><option value="1">1 - Needs 1 person</option><option value="2">2 - Verbal supervision</option><option value="3">3 - Safe definite hands</option><option value="4">4 - Safe minor hands</option></select></div>
+                    <div class="form-group"><label>6. Eyes closed standing (10s)</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Needs help not to fall</option><option value="1">1 - Unable to keep eyes closed 3s</option><option value="2">2 - Holds 3s</option><option value="3">3 - Holds 10s supervised</option><option value="4">4 - Holds 10s safely</option></select></div>
+                    <div class="form-group"><label>7. Feet together standing</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Needs help to maintain</option><option value="1">1 - Needs help to attain (holds 15s)</option><option value="2">2 - Holds 30s</option><option value="3">3 - Feet together 1 min supervised</option><option value="4">4 - Feet together independently 1 min</option></select></div>
+                    <div class="form-group"><label>8. Forward reach</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Loses balance</option><option value="1">1 - Reaches but supervised</option><option value="2">2 - Reaches &gt;5 cm</option><option value="3">3 - Reaches &gt;12 cm</option><option value="4">4 - Reaches &gt;25 cm</option></select></div>
+                    <div class="form-group"><label>9. Pick object from floor</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Unable / loses balance</option><option value="1">1 - Unable, supervised</option><option value="2">2 - Reaches 2-5cm from floor</option><option value="3">3 - Picks up with supervision</option><option value="4">4 - Picks up safely</option></select></div>
+                    <div class="form-group"><label>10. Turn look behind</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Needs assist not to fall</option><option value="1">1 - Needs supervision</option><option value="2">2 - Turns sideways only</option><option value="3">3 - Looks behind one side</option><option value="4">4 - Looks behind both sides</option></select></div>
+                    <div class="form-group"><label>11. Turn 360 degrees</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Needs assistance</option><option value="1">1 - Needs close supervision</option><option value="2">2 - Turns safely slowly</option><option value="3">3 - Safe one side &le;4 sec</option><option value="4">4 - Safe both sides &le;4 sec</option></select></div>
+                    <div class="form-group"><label>12. Place alternate foot on step/stool (8 steps)</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Needs assist not to fall</option><option value="1">1 - Completes &gt;2 steps assist</option><option value="2">2 - Completes 4 steps unsupported</option><option value="3">3 - Completes 8 steps in &gt;20s</option><option value="4">4 - Stands independently &amp; completes 8 steps in 20s</option></select></div>
+                    <div class="form-group"><label>13. Standing unsupported one foot in front (Tandem)</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Loses balance while stepping/standing</option><option value="1">1 - Needs help to step but holds 15s</option><option value="2">2 - Small step ahead independently 30s</option><option value="3">3 - Foot ahead of other independently 30s</option><option value="4">4 - Tandem stance independently 30s</option></select></div>
+                    <div class="form-group"><label>14. Standing on one leg</label><select class="bbs-calc" onchange="calcBbsScore()"><option value="0">0 - Unable to try or needs assist</option><option value="1">1 - Tries; unable 3s</option><option value="2">2 - Holds &ge;3s</option><option value="3">3 - Holds 5-10s</option><option value="4">4 - Holds &gt;10s</option></select></div>
+                    <p style="font-size:11px; font-weight:bold; color:var(--cuh-teal);">Calculated BBS Total: <span id="bbs-calc-total">0</span> / 56</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>TWIST Score &amp; Walking Timeline (FAC &ge; 4)</h2>
+                <div id="m-result" class="result-box res-waiting"><div class="result-title">Awaiting TWIST Parameters</div>Input Age, Knee Extension Grade, and BBS score to calculate total index.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL 3: FUNCTIONAL PERFORMANCE MEASURES -->
+    <div id="tests-panel" class="panel">
+        <div class="grid-2">
+            <!-- LEFT COLUMN: UPPER LIMB, TRUNK & SIT-TO-STAND -->
+            <div class="card">
+                <h2>Upper Limb, Trunk &amp; Transfer Power</h2>
+
+                <div class="test-block">
+                    <label>1. Trunk Control Test (TCT) [0&ndash;100]</label>
+                    <div class="setup-prompt">
+                        <strong>Setup:</strong> Tested supine on standard hospital bed. Score each item: <strong>0</strong> (unable without assist), <strong>12</strong> (able with aid/pulling), or <strong>25</strong> (normal completion).
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <div class="form-group" style="margin-bottom:4px;">
+                            <label style="font-size:10.5px;">Roll to Weak Side</label>
+                            <select class="tct-calc" onchange="calcTctScore()">
+                                <option value="">-- Select --</option>
+                                <option value="0">0 - Unable</option>
+                                <option value="12">12 - With aid</option>
+                                <option value="25">25 - Normal</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:4px;">
+                            <label style="font-size:10.5px;">Roll to Strong Side</label>
+                            <select class="tct-calc" onchange="calcTctScore()">
+                                <option value="">-- Select --</option>
+                                <option value="0">0 - Unable</option>
+                                <option value="12">12 - With aid</option>
+                                <option value="25">25 - Normal</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:4px;">
+                            <label style="font-size:10.5px;">Sit Balance Edge (30s)</label>
+                            <select class="tct-calc" onchange="calcTctScore()">
+                                <option value="">-- Select --</option>
+                                <option value="0">0 - Unable</option>
+                                <option value="12">12 - Touches bed</option>
+                                <option value="25">25 - Normal 30s</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:4px;">
+                            <label style="font-size:10.5px;">Sit Up from Lying</label>
+                            <select class="tct-calc" onchange="calcTctScore()">
+                                <option value="">-- Select --</option>
+                                <option value="0">0 - Unable</option>
+                                <option value="12">12 - With aid</option>
+                                <option value="25">25 - Normal</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="tct-status-badge" class="status-line">Awaiting TCT items...</div>
+                </div>
+
+                <div class="test-block">
+                    <label>2. Dynamometer Grip Strength (kg)</label>
+                    <div class="setup-prompt">
+                        <strong>Setup:</strong> Seated, shoulder adducted &amp; neutrally rotated, elbow flexed at 90&deg;, forearm neutral. Record best of 3 trials (0&ndash;100 kg).
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <div class="form-group" style="margin-bottom:2px;">
+                            <label style="font-size:10.5px;">Paretic Hand (kg)</label>
+                            <input type="number" step="0.5" id="f-grip-paretic" placeholder="e.g. 18" oninput="handleTypingValidation(this, 0, 100); calculateFunctionalTests()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:2px;">
+                            <label style="font-size:10.5px;">Non-Paretic (kg) [Optional]</label>
+                            <input type="number" step="0.5" id="f-grip-sound" placeholder="e.g. 34" oninput="handleTypingValidation(this, 0, 100); calculateFunctionalTests()">
+                        </div>
+                    </div>
+                    <div id="grip-status-badge" class="status-line">Awaiting grip measurement...</div>
+                </div>
+
+                <div class="test-block">
+                    <label>3. 5-Times Sit-to-Stand (5xSTS)</label>
+                    <div class="setup-prompt">
+                        <strong>Setup:</strong> Standard armless chair (~43&ndash;45 cm) against wall, arms crossed over chest. Time from &ldquo;Go&rdquo; until standing upright on 5th rep.
+                    </div>
+                    <input type="number" step="0.1" id="f-5sts-time" placeholder="Seconds to complete 5 stands (e.g. 13.5)" oninput="handleTypingValidation(this, 1, 120); calculateFunctionalTests()">
+                    <div id="5sts-status-badge" class="status-line">Awaiting 5xSTS time...</div>
+                </div>
+
+                <div class="test-block">
+                    <label>4. 30-Second Chair Stand (30s-CST)</label>
+                    <div class="setup-prompt">
+                        <strong>Setup:</strong> Standard chair (~43&ndash;45 cm) against wall, arms crossed. Count full upright stands in 30s (score 0 if &lt;1 full stand).
+                    </div>
+                    <input type="number" id="f-sts-reps" placeholder="Completed stands in 30s (e.g. 7)" oninput="handleTypingValidation(this, 0, 50); calculateFunctionalTests()">
+                    <div id="sts-status-badge" class="status-line">Awaiting 30s-CST repetitions...</div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: GAIT, ENDURANCE & SUMMARY -->
+            <div class="card">
+                <h2>Gait, Mobility &amp; Endurance Measures</h2>
+
+                <div class="test-block">
+                    <label>5. Timed Up and Go (TUG)</label>
+                    <div class="setup-prompt">
+                        <strong>Setup:</strong> Standard armchair (~46 cm) with floor mark 3m away. On &ldquo;Go&rdquo;, stand, walk at comfortable pace to 3m mark, turn, return &amp; sit. Stop timer when seated (habitual aid permitted).
+                    </div>
+                    <input type="number" step="0.1" id="f-tug-time" placeholder="Seconds to complete TUG (e.g. 14.2)" oninput="handleTypingValidation(this, 1, 180); calculateFunctionalTests()">
+                    <div id="tug-status-badge" class="status-line">Awaiting TUG time...</div>
+                </div>
+
+                <div class="test-block">
+                    <label>6. 10-Metre Walk Test (10MWT)</label>
+                    <div class="setup-prompt">
+                        <strong>Setup:</strong> Flat 14m corridor (2m acceleration, 10m timed zone, 2m deceleration). Time the middle 10m at comfortable walking speed.
+                    </div>
+                    <input type="number" step="0.1" id="f-10m-time" placeholder="Seconds for middle 10m (e.g. 18.5)" oninput="handleTypingValidation(this, 0.5, 180); calculateFunctionalTests()">
+                    <div id="speed-status-badge" class="status-line">Awaiting 10MWT time...</div>
+                </div>
+
+                <div class="test-block">
+                    <label>7. 6-Minute Walk Test (6MWT)</label>
+                    <div class="setup-prompt">
+                        <strong>Setup:</strong> Flat, unobstructed 20m or 30m corridor marked with cones. Walk as far as possible in 6 mins (standing rests permitted; timer runs continuously).
+                    </div>
+                    <input type="number" id="f-6mwt-dist" placeholder="Total distance in metres (e.g. 240)" oninput="handleTypingValidation(this, 0, 1000); calculateFunctionalTests()">
+                    <div id="6mwt-status-badge" class="status-line">Awaiting 6MWT distance...</div>
+                </div>
+
+                <h2 style="margin-top:12px;">Functional Performance Profile</h2>
+                <div id="func-result-box" class="result-box res-waiting">
+                    <div class="result-title">Awaiting Functional Input</div>
+                    Enter any completed test above to populate clinical interpretations and add them to the MDT summary.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL 4: MDT GOAL SUMMARY GENERATOR -->
+    <div id="mdt-panel" class="panel">
+        <div class="card">
+            <h2>MDT Summary Note</h2>
+            <p style="font-size:11.5px; color:#475569; margin-top:0;">Compact prognostic note formatted strictly for small goal-setting form boxes. Only completed scores and their clinical meanings are included.</p>
+            
+            <div id="mdt-output-box" class="mdt-box">Awaiting clinical assessments...</div>
+            
+            <button class="copy-btn" onclick="copyMdtSummary()">Copy Compact Note</button>
+            <span id="copy-confirmation" style="display:none; font-size:11px; color:#15803d; font-weight:bold; margin-left:8px;">Copied to Clipboard!</span>
+        </div>
+    </div>
+
+    <!-- PANEL 5: CLINICAL INDUCTION & GLOSSARY -->
+    <div id="guide-panel" class="panel">
+        <div class="card">
+            <h2>Clinical Induction: Understanding the Decision Tools</h2>
+            <p style="font-size:11.5px; color:#475569; line-height:1.4;">This portal integrates two internationally validated acute stroke prognostic algorithms and seven objective bedside performance metrics into a pragmatic workflow:</p>
+
+            <h3>1. PREP2 (Upper Limb Recovery at 12 Weeks)</h3>
+            <p style="font-size:11.5px; line-height:1.4;">
+                &bull; <strong>Timing Window:</strong> Assessed at <strong>Day 3 (48&ndash;72 hours post-stroke)</strong>.<br>
+                &bull; <strong>Primary Milestone:</strong> Predicts functional arm capacity at <strong>12 Weeks (3 Months)</strong> post-stroke (Action Research Arm Test: ARAT 0&ndash;57).<br>
+                &bull; <strong>The SAFE Score:</strong> Sum of MRC strength for Shoulder Abduction (0&ndash;5) and Finger Extension (0&ndash;5). Total: 0&ndash;10.<br>
+                &bull; <strong>Role of Age:</strong> For patients with SAFE &ge; 5, Age &lt;80 automatically predicts Excellent recovery. For Age &ge; 80, SAFE must be &ge;8 for Excellent; otherwise Good.<br>
+                &bull; <strong>Evidence on the Non-TMS Fallback:</strong> The full research protocol incorporates Transcranial Magnetic Stimulation (TMS) to assess Motor Evoked Potentials (MEPs) when SAFE &lt; 5. Because acute bedside TMS is unavailable in routine ward practice, this tool implements the <strong>conservative clinical fallback</strong>:
+            </p>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:8px 10px; border-radius:4px; font-size:11px; line-height:1.4; margin-bottom:8px;">
+                <strong>Key Literature Context:</strong><br>
+                1. <em>SAFE &ge; 5 (~60% of patients):</em> Accuracy is 78%&ndash;80% using Age + SAFE alone; <strong>TMS is never required</strong>.<br>
+                2. <em>SAFE &lt; 5 (Without TMS):</em> Patients branch directly to the NIHSS score (&lt;7 vs. &ge;7). This accurately identifies the <em>Poor</em> category (&ge;7), but treating all patients with NIHSS &lt; 7 as <em>Limited</em> represents a <strong>conservative floor</strong>. Stinear et al. (2017) demonstrated in non-TMS CART analyses that an NIHSS &lt; 9 can yield Good or Limited outcomes because ~10%&ndash;15% of patients retain latent descending pathway integrity that cannot be identified without neurophysiology.
+            </div>
+
+            <h3>2. Refined TWIST Index (Mobility &amp; Walking Timeline)</h3>
+            <p style="font-size:11.5px; line-height:1.4;">
+                &bull; <strong>Timing Window:</strong> Assessed at <strong>Day 7 (1 week post-stroke)</strong>.<br>
+                &bull; <strong>Scoring (0&ndash;4 Points):</strong> Points are awarded for Age &lt;80 (+1 pt), Knee Extension &ge; MRC Grade 3 (+1 pt), and Berg Balance Scale (&ge;16: +2 pts; 6&ndash;15: +1 pt; &lt;6: +0 pts).<br>
+                &bull; <strong>Target Milestone (FAC &ge; 4):</strong> Predicts weeks required to achieve independent walking on flat ground without human physical assistance.
+            </p>
+
+            <h3>3. Functional Performance Measures &amp; Cut-Offs</h3>
+            <p style="font-size:11.5px; line-height:1.4;">
+                &bull; <strong>TCT (0&ndash;100):</strong> Early bed mobility and trunk control screen (&lt;50 indicates severe trunk impairment; &ge;50 predicts higher likelihood of regaining walking).<br>
+                &bull; <strong>Grip Strength:</strong> Evaluates distal recovery against sound limb symmetry and sarcopenia cut-offs (&lt;16 kg females / &lt;27 kg males).<br>
+                &bull; <strong>5xSTS &amp; 30s-CST:</strong> Lower-limb functional power and endurance (&gt;12s on 5xSTS or &lt;8 reps on 30s-CST flags falls risk).<br>
+                &bull; <strong>TUG:</strong> Dynamic transfer, gait, and turning mobility (&le;13.5s low community falls risk; &gt;13.5s elevated falls risk; &gt;30s dependent).<br>
+                &bull; <strong>10MWT:</strong> Comfortable gait speed (10 m &divide; time in seconds): &lt;0.40 m/s household, 0.40&ndash;0.80 m/s limited community, &gt;0.80 m/s community ambulator.<br>
+                &bull; <strong>6MWT:</strong> Walking endurance (&lt;200 m household/limited, 200&ndash;299 m limited community, &ge;300 m functional community endurance).
+            </p>
+
+            <h3>4. Acronym Reference Table</h3>
+            <table class="acronym-table">
+                <thead><tr><th>Acronym</th><th>Full Clinical Title</th><th>Definition &amp; Ward Context</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>PREP2</strong></td><td>Predict Recovery Potential (v2)</td><td>Day 3 upper limb prognostic tree predicting 12-week arm capacity.</td></tr>
+                    <tr><td><strong>TWIST</strong></td><td>Time Walking Independently After Stroke</td><td>1-Week mobility index predicting the timeline to independent walking.</td></tr>
+                    <tr><td><strong>TCT</strong></td><td>Trunk Control Test</td><td>4-item bed rolling and sitting balance screen (0&ndash;100).</td></tr>
+                    <tr><td><strong>TUG</strong></td><td>Timed Up and Go</td><td>Sit-to-stand, 3m walk, turn, and sit dynamic mobility &amp; falls screen.</td></tr>
+                    <tr><td><strong>10MWT</strong></td><td>10-Metre Walk Test</td><td>Comfortable gait speed test yielding velocity in m/s.</td></tr>
+                    <tr><td><strong>6MWT</strong></td><td>6-Minute Walk Test</td><td>Functional walking endurance distance in metres.</td></tr>
+                    <tr><td><strong>5xSTS / 30s-CST</strong></td><td>Sit-to-Stand Tests</td><td>Lower-limb functional strength and transfer endurance measures.</td></tr>
+                    <tr><td><strong>SAFE</strong></td><td>Shoulder Abduction + Finger Extension</td><td>Summed MRC motor score (0&ndash;10) evaluated on Day 3.</td></tr>
+                    <tr><td><strong>BBS</strong></td><td>Berg Balance Scale</td><td>14-item functional sitting/standing balance score (0&ndash;56) evaluated at 1 week.</td></tr>
+                    <tr><td><strong>NIHSS</strong></td><td>National Institutes of Health Stroke Scale</td><td>15-item neurological impairment scale evaluated on Day 3 or pulled from Day 0 chart.</td></tr>
+                    <tr><td><strong>FAC</strong></td><td>Functional Ambulation Categories</td><td>0&ndash;5 visual scale grading physical assistance in walking (Target &ge; 4 = independent on level surfaces).</td></tr>
+                    <tr><td><strong>ARAT</strong></td><td>Action Research Arm Test</td><td>57-point grasp/pinch/coordination upper limb functional test.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="evidence-box">
+                <strong>Primary Evidence References:</strong><br>
+                &bull; <em>Stinear et al. (2017).</em> PREP2: Prediction of upper limb recovery after stroke via clinical algorithms. <em>Annals of Clinical and Translational Neurology</em>, 4(11), 811-820.<br>
+                &bull; <em>Smith et al. (2022).</em> The TWIST Tool Predicts When Patients Will Recover Independent Walking After Stroke: An Observational Study. <em>Neurorehabilitation and Neural Repair</em>, 36(7), 461-471. PMID: 35586876.
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <strong>StrokePath CUH</strong> &bull; Clinical Decision Support Tool &bull; Cork University Hospital Acute Stroke Service
+    </footer>
+</div>
+
+<script>
+    var currentULTrack = "";
+    var currentULMeaning = "";
+    var ulIsAssessed = false;
+
+    var currentMobTrack = "";
+    var currentMobMeaning = "";
+    var mobIsAssessed = false;
+
+    var currentTctText = "";
+    var currentGripText = "";
+    var current5StsText = "";
+    var current30StsText = "";
+    var currentTugText = "";
+    var current10mText = "";
+    var current6mwtText = "";
+
+    var dischargeRecommendation = "";
+
+    function handleTypingValidation(input, minVal, maxVal) {
+        if (typeof minVal === "undefined") minVal = 0;
+        if (typeof maxVal === "undefined") maxVal = null;
+        if (!input.value) return;
+        var val = parseFloat(input.value);
+        if (val < minVal) {
+            input.value = minVal;
+        } else if (maxVal !== null && val > maxVal) {
+            input.value = maxVal;
+        }
+    }
+
+    function finalizeAgeValidation(input) {
+        if (!input.value) return;
+        var val = parseInt(input.value, 10);
+        if (isNaN(val)) {
+            input.value = "";
+        } else if (val < 18) {
+            input.value = 18;
+        } else if (val > 110) {
+            input.value = 110;
+        }
+        syncAge(input.id);
+    }
+
+    function switchTab(panelId, tabButton) {
+        var panels = document.querySelectorAll('.panel');
+        for (var i = 0; i < panels.length; i++) {
+            panels[i].classList.remove('active');
+        }
+        var tabs = document.querySelectorAll('.tab');
+        for (var j = 0; j < tabs.length; j++) {
+            tabs[j].classList.remove('active');
+        }
+        document.getElementById(panelId).classList.add('active');
+        tabButton.classList.add('active');
+        if (panelId === 'mdt-panel') {
+            generateMdtSummary();
+        }
+    }
+
+    function toggleDrawer(drawerId) {
+        var drawer = document.getElementById(drawerId);
+        drawer.style.display = (drawer.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function syncAge(sourceId) {
+        var val = document.getElementById(sourceId).value;
+        document.getElementById('p-age').value = val;
+        document.getElementById('t-age').value = val;
+        calculateAll();
+    }
+
+    function calculateDayCounter() {
+        var onsetVal = document.getElementById('d-onset').value;
+        var assessVal = document.getElementById('d-assess').value;
+        var badge = document.getElementById('day-counter-display');
+
+        if (!onsetVal || !assessVal) {
+            badge.className = "day-badge";
+            badge.innerText = "Select Dates";
+            return;
+        }
+
+        var d1 = new Date(onsetVal);
+        var d2 = new Date(assessVal);
+        var diffDays = Math.floor((d2 - d1) / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+            badge.className = "day-badge";
+            badge.innerText = "Check Dates (Negative)";
+        } else if (diffDays <= 7) {
+            badge.className = "day-badge valid";
+            badge.innerText = "Day " + diffDays + " Post-Stroke (Standard Window)";
+        } else {
+            badge.className = "day-badge delayed";
+            badge.innerText = "Day " + diffDays + " Post-Stroke (Delayed Baseline)";
+        }
+        generateMdtSummary();
+    }
+
+    function calcNihssScore() {
+        var total = 0;
+        var selects = document.querySelectorAll('.nihss-calc');
+        for (var i = 0; i < selects.length; i++) {
+            total += parseInt(selects[i].value, 10) || 0;
+        }
+        document.getElementById('p-nihss-direct').value = total;
+        calculateAll();
+    }
+
+    function calcBbsScore() {
+        var total = 0;
+        var selects = document.querySelectorAll('.bbs-calc');
+        for (var i = 0; i < selects.length; i++) {
+            total += parseInt(selects[i].value, 10) || 0;
+        }
+        document.getElementById('bbs-calc-total').innerText = total;
+        document.getElementById('m-bbs-direct').value = total;
+        calculateAll();
+    }
+
+    function calcTctScore() {
+        calculateFunctionalTests();
+    }
+
+    function calculateFunctionalTests() {
+        var summaryLines = [];
+        var hasAnyData = false;
+
+        // 1. Trunk Control Test (TCT)
+        var tctSelects = document.querySelectorAll('.tct-calc');
+        var tctTotal = 0;
+        var tctAnswered = 0;
+        for (var i = 0; i < tctSelects.length; i++) {
+            if (tctSelects[i].value !== "") {
+                tctTotal += parseInt(tctSelects[i].value, 10);
+                tctAnswered++;
+            }
+        }
+
+        if (tctAnswered > 0) {
+            hasAnyData = true;
+            var tctCat = (tctTotal >= 50) ? "Good trunk control" : "Impaired trunk control";
+            if (tctAnswered < 4) {
+                document.getElementById('tct-status-badge').innerHTML = "<strong>Partial Score:</strong> " + tctTotal + "/100 (" + tctAnswered + "/4 items scored)";
+                currentTctText = "TCT: " + tctTotal + "/100 (" + tctAnswered + "/4 items)";
+            } else {
+                document.getElementById('tct-status-badge').innerHTML = "<strong>Total TCT:</strong> " + tctTotal + "/100 (" + tctCat + ")";
+                currentTctText = "TCT: " + tctTotal + "/100 (" + tctCat + ")";
+            }
+            summaryLines.push("<div><strong>&bull; Trunk Control Test:</strong> " + tctTotal + "/100 &mdash; <em>" + (tctAnswered === 4 ? tctCat : tctAnswered + "/4 items") + "</em></div>");
+        } else {
+            currentTctText = "";
+            document.getElementById('tct-status-badge').innerText = "Awaiting TCT items...";
+        }
+
+        // 2. Grip Strength
+        var pGrip = parseFloat(document.getElementById('f-grip-paretic').value);
+        var sGrip = parseFloat(document.getElementById('f-grip-sound').value);
+        if (!isNaN(pGrip) && pGrip >= 0) {
+            hasAnyData = true;
+            var gripStr = pGrip + " kg";
+            if (!isNaN(sGrip) && sGrip > 0) {
+                var ratio = Math.floor((pGrip / sGrip) * 100);
+                gripStr += " (" + ratio + "% of sound side)";
+            }
+            document.getElementById('grip-status-badge').innerHTML = "<strong>Paretic Force:</strong> " + gripStr;
+            currentGripText = "Grip Strength: " + gripStr;
+            summaryLines.push("<div style='margin-top:4px;'><strong>&bull; Grip Strength:</strong> " + gripStr + "</div>");
+        } else {
+            currentGripText = "";
+            document.getElementById('grip-status-badge').innerText = "Awaiting grip measurement...";
+        }
+
+        // 3. 5-Times Sit-to-Stand (5xSTS)
+        var fiveStsTime = parseFloat(document.getElementById('f-5sts-time').value);
+        if (!isNaN(fiveStsTime) && fiveStsTime > 0) {
+            hasAnyData = true;
+            var fiveCat = "";
+            if (fiveStsTime <= 12.0) fiveCat = "Normal lower-limb power";
+            else if (fiveStsTime <= 15.0) fiveCat = "Impaired strength / falls risk";
+            else fiveCat = "Significant lower-limb weakness";
+
+            document.getElementById('5sts-status-badge').innerHTML = "<strong>5xSTS Time:</strong> " + fiveStsTime.toFixed(1) + "s (" + fiveCat + ")";
+            current5StsText = "5xSTS: " + fiveStsTime.toFixed(1) + "s (" + fiveCat + ")";
+            summaryLines.push("<div style='margin-top:4px;'><strong>&bull; 5x Sit-to-Stand:</strong> " + fiveStsTime.toFixed(1) + "s &mdash; <em>" + fiveCat + "</em></div>");
+        } else {
+            current5StsText = "";
+            document.getElementById('5sts-status-badge').innerText = "Awaiting 5xSTS time...";
+        }
+
+        // 4. 30-Second Chair Stand (30s-CST)
+        var stsReps = parseInt(document.getElementById('f-sts-reps').value, 10);
+        if (!isNaN(stsReps) && stsReps >= 0) {
+            hasAnyData = true;
+            var stsCat = (stsReps >= 8) ? "Functional leg power" : "Transfer fall risk";
+            current30StsText = "30s Chair Stand: " + stsReps + " reps (" + stsCat + ")";
+            document.getElementById('sts-status-badge').innerHTML = "<strong>Reps:</strong> " + stsReps + " stands (" + stsCat + ")";
+            summaryLines.push("<div style='margin-top:4px;'><strong>&bull; 30s Chair Stand:</strong> " + stsReps + " reps &mdash; <em>" + stsCat + "</em></div>");
+        } else {
+            current30StsText = "";
+            document.getElementById('sts-status-badge').innerText = "Awaiting 30s-CST repetitions...";
+        }
+
+        // 5. Timed Up and Go (TUG)
+        var tugTime = parseFloat(document.getElementById('f-tug-time').value);
+        if (!isNaN(tugTime) && tugTime > 0) {
+            hasAnyData = true;
+            var tugCat = "";
+            if (tugTime < 10.0) tugCat = "Normal mobility";
+            else if (tugTime <= 13.5) tugCat = "Independent mobility (low falls risk)";
+            else if (tugTime <= 30.0) tugCat = "Elevated community falls risk";
+            else tugCat = "Dependent mobility";
+
+            document.getElementById('tug-status-badge').innerHTML = "<strong>TUG Time:</strong> " + tugTime.toFixed(1) + "s (" + tugCat + ")";
+            currentTugText = "TUG: " + tugTime.toFixed(1) + "s (" + tugCat + ")";
+            summaryLines.push("<div style='margin-top:4px;'><strong>&bull; Timed Up &amp; Go:</strong> " + tugTime.toFixed(1) + "s &mdash; <em>" + tugCat + "</em></div>");
+        } else {
+            currentTugText = "";
+            document.getElementById('tug-status-badge').innerText = "Awaiting TUG time...";
+        }
+
+        // 6. 10MWT
+        var walkTime = parseFloat(document.getElementById('f-10m-time').value);
+        if (!isNaN(walkTime) && walkTime > 0) {
+            hasAnyData = true;
+            var speed = (10 / walkTime).toFixed(2);
+            var cat = "";
+            var color = "";
+            if (speed < 0.40) {
+                cat = "Household ambulation";
+                color = "#991b1b";
+            } else if (speed <= 0.80) {
+                cat = "Limited community ambulation";
+                color = "#0d9488";
+            } else {
+                cat = "Community ambulation";
+                color = "#15803d";
+            }
+            current10mText = "10MWT: " + speed + " m/s (" + cat + ")";
+            document.getElementById('speed-status-badge').innerHTML = "<strong>Calculated Speed:</strong> " + speed + " m/s (<span style='color:" + color + ";'>" + cat + "</span>)";
+            summaryLines.push("<div style='margin-top:4px;'><strong>&bull; 10MWT Velocity:</strong> " + speed + " m/s &mdash; <em>" + cat + "</em></div>");
+        } else {
+            current10mText = "";
+            document.getElementById('speed-status-badge').innerText = "Awaiting 10MWT time...";
+        }
+
+        // 7. 6-Minute Walk Test (6MWT)
+        var dist6mwt = parseInt(document.getElementById('f-6mwt-dist').value, 10);
+        if (!isNaN(dist6mwt) && dist6mwt >= 0) {
+            hasAnyData = true;
+            var distCat = "";
+            if (dist6mwt < 200) distCat = "Household / limited endurance";
+            else if (dist6mwt < 300) distCat = "Limited community endurance";
+            else distCat = "Functional community endurance";
+
+            document.getElementById('6mwt-status-badge').innerHTML = "<strong>6MWT Distance:</strong> " + dist6mwt + "m (" + distCat + ")";
+            current6mwtText = "6MWT: " + dist6mwt + "m (" + distCat + ")";
+            summaryLines.push("<div style='margin-top:4px;'><strong>&bull; 6-Minute Walk Test:</strong> " + dist6mwt + "m &mdash; <em>" + distCat + "</em></div>");
+        } else {
+            current6mwtText = "";
+            document.getElementById('6mwt-status-badge').innerText = "Awaiting 6MWT distance...";
+        }
+
+        var resBox = document.getElementById('func-result-box');
+        if (hasAnyData) {
+            resBox.className = "result-box res-good";
+            resBox.innerHTML = "<div class='result-title'>Objective Performance Summary</div>" + summaryLines.join("");
+        } else {
+            resBox.className = "result-box res-waiting";
+            resBox.innerHTML = "<div class='result-title'>Awaiting Functional Input</div>Enter any completed test above to populate clinical interpretations and add them to the MDT summary.";
+        }
+        generateMdtSummary();
+    }
+
+    function calculateAll() {
+        // --- 1. SAFE MOTOR MATRIX ---
+        var sh = parseInt(document.getElementById('p-sh').value, 10) || 0;
+        var fi = parseInt(document.getElementById('p-fi').value, 10) || 0;
+        var safe = sh + fi;
+        document.getElementById('safe-display').innerText = safe;
+        document.getElementById('dash-safe').innerText = "SAFE " + safe + "/10";
+
+        var nihssBlock = document.getElementById('nihss-block');
+        if (safe < 5) {
+            nihssBlock.style.display = 'block';
+        } else {
+            nihssBlock.style.display = 'none';
+        }
+
+        // --- 2. PREP2 ENGINE (DAY 3: 48-72h) ---
+        var ageField = document.getElementById('p-age').value;
+        var directNihssValue = document.getElementById('p-nihss-direct').value;
+        var currentNihss = parseInt(directNihssValue, 10);
+        var pBox = document.getElementById('p-result');
+
+        var ageNum = parseInt(ageField, 10);
+        if (ageField === "" || isNaN(ageNum) || ageNum < 18) {
+            pBox.className = "result-box res-waiting";
+            pBox.innerHTML = "<div class='result-title'>Awaiting Patient Age</div>Input valid patient age (18-110) to map algorithmic recovery targets.";
+            currentULTrack = "";
+            currentULMeaning = "";
+            ulIsAssessed = false;
+            document.getElementById('dash-prep2').innerText = "Pending Age";
+        } else {
+            var age = ageNum;
+            if (safe >= 5) {
+                ulIsAssessed = true;
+                if (age < 80 || safe >= 8) {
+                    pBox.className = "result-box res-excellent";
+                    pBox.innerHTML = "<div class='result-title'>Predicted Track: EXCELLENT (at 12 Weeks)</div>" +
+                                     "<div class='result-desc'><strong>12-Week Target:</strong> 94%&ndash;98% probability of full arm/hand utility (ARAT &ge; 50/57).</div>" +
+                                     "<div class='section-callout'>Suggested 1-Week MDT Goal:</div>" +
+                                     "<div class='result-desc'>Independent unassisted eating and drinking with paretic hand; initiate 45-min daily self-directed fine-motor task drills.</div>" +
+                                     "<div class='section-callout'>Therapist Clinical Prompt:</div>" +
+                                     "<div class='result-desc'>High-repetition task-specific dexterity drills, object manipulation, unconstrained daily ADL integration.</div>";
+                    currentULTrack = "SAFE " + safe + "/10";
+                    currentULMeaning = "EXCELLENT recovery (ARAT >=50 expected at 12 wks)";
+                    document.getElementById('dash-prep2').innerText = "EXCELLENT";
+                } else {
+                    pBox.className = "result-box res-good";
+                    pBox.innerHTML = "<div class='result-title'>Predicted Track: GOOD (at 12 Weeks)</div>" +
+                                     "<div class='result-desc'><strong>12-Week Target:</strong> 75%&ndash;80% probability of functional arm (ARAT 33&ndash;49/57). Useful hand for ADLs.</div>" +
+                                     "<div class='section-callout'>Suggested 1-Week MDT Goal:</div>" +
+                                     "<div class='result-desc'>Active-assisted stabilization of cup/plate during meals; initiate NMES/ESTIM to wrist/finger extensors.</div>" +
+                                     "<div class='section-callout'>Therapist Clinical Prompt:</div>" +
+                                     "<div class='result-desc'>NMES/ESTIM for wrist/finger extensors as indicated; bimanual grasp/release training, active-assisted reach.</div>";
+                    currentULTrack = "SAFE " + safe + "/10";
+                    currentULMeaning = "GOOD recovery (ARAT 33-49 expected at 12 wks; useful hand for ADLs)";
+                    document.getElementById('dash-prep2').innerText = "GOOD";
+                }
+            } else {
+                if (directNihssValue === "" || isNaN(currentNihss) || currentNihss < 0) {
+                    pBox.className = "result-box res-limited";
+                    pBox.innerHTML = "<div class='result-title'>Non-TMS Fallback Track Active</div>SAFE &lt; 5 requires Day 3 (preferred) or Day 0 baseline NIHSS total score above.";
+                    currentULTrack = "";
+                    currentULMeaning = "";
+                    ulIsAssessed = false;
+                    document.getElementById('dash-prep2').innerText = "Pending NIHSS";
+                } else if (currentNihss < 7) {
+                    ulIsAssessed = true;
+                    pBox.className = "result-box res-limited";
+                    pBox.innerHTML = "<div class='result-title'>Predicted Track: LIMITED (at 12 Weeks)</div>" +
+                                     "<div style='background:#fffbeb; border:1px solid #fde68a; color:#92400e; padding:6px 8px; border-radius:4px; font-size:11px; margin-bottom:8px;'>" +
+                                     "<strong>Non-TMS Floor Advisory:</strong> This prediction represents a conservative floor. Approximately 10%&ndash;15% of patients with low overall stroke severity (NIHSS &lt; 9) retain viable corticospinal projections and achieve a functional (Good) hand grasp plateau." +
+                                     "</div>" +
+                                     "<div class='result-desc'><strong>12-Week Target:</strong> ~60% probability of gross motor assist (ARAT 12&ndash;32/57). Limited hand utility.</div>" +
+                                     "<div class='section-callout'>Suggested 1-Week MDT Goal:</div>" +
+                                     "<div class='result-desc'>Complete bedside NMES/ESTIM to posterior deltoid/supraspinatus &times;2 daily; achieve pain-free passive GH range to 90&deg;.</div>" +
+                                     "<div class='section-callout'>Therapist Clinical Prompt:</div>" +
+                                     "<div class='result-desc'>NMES/ESTIM for glenohumeral stability; active-assisted range retention, gross reach support, seating positioning.</div>";
+                    currentULTrack = "SAFE " + safe + "/10, NIHSS " + currentNihss;
+                    currentULMeaning = "LIMITED recovery (ARAT 12-32 expected; gross assist/stabilizer only)";
+                    document.getElementById('dash-prep2').innerText = "LIMITED";
+                } else {
+                    ulIsAssessed = true;
+                    pBox.className = "result-box res-poor";
+                    pBox.innerHTML = "<div class='result-title'>Predicted Track: POOR (at 12 Weeks)</div>" +
+                                     "<div class='result-desc'><strong>12-Week Target:</strong> ~85% probability of motor dependence (ARAT &lt; 12/57).</div>" +
+                                     "<div class='section-callout'>Suggested 1-Week MDT Goal:</div>" +
+                                     "<div class='result-desc'>Establish 24-hr hemiplegic shoulder positioning protocol with nursing; initiate anti-subluxation NMES/ESTIM.</div>" +
+                                     "<div class='section-callout'>Therapist Clinical Prompt:</div>" +
+                                     "<div class='result-desc'>Glenohumeral joint safety, NMES/ESTIM to prevent subluxation/pain, positioning protocols, carer education.</div>";
+                    currentULTrack = "SAFE " + safe + "/10, NIHSS " + currentNihss;
+                    currentULMeaning = "POOR recovery (ARAT <12 expected; high motor dependence)";
+                    document.getElementById('dash-prep2').innerText = "POOR";
+                }
+            }
+        }
+
+        // --- 3. REFINED TWIST (DAY 7: 1-WEEK 0-4 POINT INDEX) ---
+        var twistAge = document.getElementById('t-age').value;
+        var kneeInput = document.getElementById('t-knee').value;
+        var bbsInput = document.getElementById('m-bbs-direct').value;
+        var mBox = document.getElementById('m-result');
+
+        var twistAgeNum = parseInt(twistAge, 10);
+        if (twistAge === "" || isNaN(twistAgeNum) || twistAgeNum < 18 || kneeInput === "" || bbsInput === "" || isNaN(parseInt(bbsInput, 10)) || parseInt(bbsInput, 10) < 0) {
+            mBox.className = "result-box res-waiting";
+            mBox.innerHTML = "<div class='result-title'>Awaiting TWIST Parameters</div>Input Age, Knee Extension Grade, and BBS score to calculate total index.";
+            currentMobTrack = "";
+            currentMobMeaning = "";
+            mobIsAssessed = false;
+            dischargeRecommendation = "";
+            document.getElementById('dash-twist').innerText = "Score Pending";
+            document.getElementById('dash-discharge').innerText = "Awaiting TWIST";
+        } else {
+            mobIsAssessed = true;
+            var ageVal = twistAgeNum;
+            var kneeVal = parseInt(kneeInput, 10);
+            var bbsVal = parseInt(bbsInput, 10);
+
+            var score = 0;
+            var breakdown = [];
+
+            if (ageVal < 80) { score += 1; breakdown.push("Age <80 (+1)"); }
+            else { breakdown.push("Age >=80 (+0)"); }
+
+            if (kneeVal === 1) { score += 1; breakdown.push("Knee Ext >=Gr 3 (+1)"); }
+            else { breakdown.push("Knee Ext <Gr 3 (+0)"); }
+
+            if (bbsVal >= 16) { score += 2; breakdown.push("BBS >=16 (+2)"); }
+            else if (bbsVal >= 6) { score += 1; breakdown.push("BBS 6-15 (+1)"); }
+            else { breakdown.push("BBS <6 (+0)"); }
+
+            var title = "", boxClass = "", body = "", goalPrompt = "";
+
+            switch(score) {
+                case 4:
+                    boxClass = "res-excellent";
+                    title = "TWIST Score: 4 / 4 (Fast Trajectory)";
+                    body = "<strong>Timeline:</strong> Independent walking (FAC &ge; 4) within <strong>4 to 6 Weeks</strong>.<br>&bull; 6-Week Probability: ~95%&ndash;98%<br>&bull; 12-Week Probability: >98%";
+                    goalPrompt = "Independent ward bed-to-chair transfers and supervised level walking with stick &ge;15m in 1 week.";
+                    dischargeRecommendation = "Likely ESD Candidate";
+                    currentMobTrack = "TWIST 4/4 (BBS " + bbsVal + ")";
+                    currentMobMeaning = "Independent walking predicted in 4-6 weeks (Likely ESD Candidate)";
+                    break;
+                case 3:
+                    boxClass = "res-good";
+                    title = "TWIST Score: 3 / 4 (Good Trajectory)";
+                    body = "<strong>Timeline:</strong> Independent walking (FAC &ge; 4) within <strong>6 to 9 Weeks</strong>.<br>&bull; 6-Week Probability: ~35%<br>&bull; 12-Week Probability: ~90%";
+                    goalPrompt = "Modified independent transfer with aid and 1&times; person assisted stepping to ward en-suite in 1 week.";
+                    dischargeRecommendation = "Short Inpatient Rehabilitation / ESD Potential";
+                    currentMobTrack = "TWIST 3/4 (BBS " + bbsVal + ")";
+                    currentMobMeaning = "Independent walking predicted in 6-9 weeks (Short Inpatient Rehab / ESD Potential)";
+                    break;
+                case 2:
+                    boxClass = "res-good";
+                    title = "TWIST Score: 2 / 4 (Moderate Trajectory)";
+                    body = "<strong>Timeline:</strong> Independent walking within <strong>9 to 12+ Weeks</strong>.<br>&bull; 6-Week Probability: ~33%<br>&bull; 26-Week Probability: ~90%";
+                    goalPrompt = "Stand-pivot transfer with 1&times; physical assist; dynamic standing balance >30s at plinth in 1 week.";
+                    dischargeRecommendation = "Inpatient Rehabilitation Recommended";
+                    currentMobTrack = "TWIST 2/4 (BBS " + bbsVal + ")";
+                    currentMobMeaning = "Independent walking predicted in 9-12+ weeks (Inpatient Rehab Recommended)";
+                    break;
+                case 1:
+                    boxClass = "res-limited";
+                    title = "TWIST Score: 1 / 4 (Slow Trajectory)";
+                    body = "<strong>Timeline:</strong> Extended rehab timeline required (<strong>12 to 26 Weeks</strong>).<br>&bull; 6-Week Probability: ~20%<br>&bull; 26-Week Probability: ~67%";
+                    goalPrompt = "Supported sitting balance at bed edge >5 mins; 2&times; person assisted sit-to-stand in 1 week.";
+                    dischargeRecommendation = "Extended Rehabilitation Pathway";
+                    currentMobTrack = "TWIST 1/4 (BBS " + bbsVal + ")";
+                    currentMobMeaning = "Extended recovery (12-26 weeks to independent walking)";
+                    break;
+                case 0:
+                    boxClass = "res-poor";
+                    title = "TWIST Score: 0 / 4 (High Dependence Risk)";
+                    body = "<strong>Timeline:</strong> Low probability of independent walking by 6 months (~20%).<br>&bull; Focus on posture, hoist transfers, and seating support.";
+                    goalPrompt = "Tolerate supportive high-back wheelchair seating >1 hour; safe hoist/standing lifter transfer mastery in 1 week.";
+                    dischargeRecommendation = "Long-Term Support Planning Required";
+                    currentMobTrack = "TWIST 0/4 (BBS " + bbsVal + ")";
+                    currentMobMeaning = "High dependence risk (~20% walking independently at 6 months)";
+                    break;
+            }
+
+            document.getElementById('dash-twist').innerText = "Score " + score + "/4";
+            document.getElementById('dash-discharge').innerText = dischargeRecommendation;
+
+            mBox.className = "result-box " + boxClass;
+            mBox.innerHTML =
+                "<div class='result-title'>" + title + "</div>" +
+                "<div style='font-size:11px; color:#475569; margin-bottom:4px;'><strong>Points:</strong> " + breakdown.join(" | ") + "</div>" +
+                "<div class='result-desc'>" + body + "</div>" +
+                "<div class='section-callout'>Suggested 1-Week MDT Goal:</div>" +
+                "<div class='result-desc'>" + goalPrompt + "</div>" +
+                "<div class='section-callout'>DISCHARGE PATHWAY RECOMMENDATION</div>" +
+                "<div class='result-desc' style='font-weight:700; color:var(--cuh-teal-dark);'>" + dischargeRecommendation + "</div>";
+        }
+        generateMdtSummary();
+    }
+
+    function generateMdtSummary() {
+        var onsetVal = document.getElementById('d-onset').value;
+        var assessVal = document.getElementById('d-assess').value;
+        var dayTag = "";
+
+        if (onsetVal && assessVal) {
+            var d1 = new Date(onsetVal);
+            var d2 = new Date(assessVal);
+            var diffDays = Math.floor((d2 - d1) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 0) {
+                dayTag = "[Day " + diffDays + "] ";
+            }
+        }
+
+        var lines = [];
+
+        if (ulIsAssessed) {
+            lines.push("- UL " + dayTag + "(" + currentULTrack + "): " + currentULMeaning);
+        }
+
+        if (mobIsAssessed) {
+            lines.push("- Mobility " + dayTag + "(" + currentMobTrack + "): " + currentMobMeaning);
+        }
+
+        if (currentTctText) lines.push("- " + currentTctText);
+        if (currentGripText) lines.push("- " + currentGripText);
+        if (current5StsText) lines.push("- " + current5StsText);
+        if (current30StsText) lines.push("- " + current30StsText);
+        if (currentTugText) lines.push("- " + currentTugText);
+        if (current10mText) lines.push("- " + current10mText);
+        if (current6mwtText) lines.push("- " + current6mwtText);
+
+        var newline = String.fromCharCode(10);
+        if (lines.length === 0) {
+            document.getElementById('mdt-output-box').innerText = "Awaiting clinical assessments...";
+        } else {
+            document.getElementById('mdt-output-box').innerText = lines.join(newline);
+        }
+    }
+
+    function copyMdtSummary() {
+        var text = document.getElementById('mdt-output-box').innerText;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function() {
+                showCopyConfirmation();
+            });
+        } else {
+            var temp = document.createElement("textarea");
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            showCopyConfirmation();
+        }
+    }
+
+    function showCopyConfirmation() {
+        var conf = document.getElementById('copy-confirmation');
+        conf.style.display = 'inline';
+        setTimeout(function() { conf.style.display = 'none'; }, 2000);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        calculateAll();
+        calculateFunctionalTests();
+    });
+</script>
+</body>
+</html>
